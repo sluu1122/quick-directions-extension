@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Directions - Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Quick Directions Settings</h1>
+    <p class="description">Add locations to use as starting points for directions. Highlight text on any webpage, right-click, and select a location to get directions.</p>
+
+    <div class="add-location">
+      <h2>Add New Location</h2>
+      <form id="add-location-form">
+        <div class="form-group">
+          <label for="location-name">Location Name</label>
+          <input type="text" id="location-name" placeholder="e.g., Home, Work, Gym" required>
+        </div>
+        <div class="form-group">
+          <label for="location-address">Address</label>
+          <input type="text" id="location-address" placeholder="e.g., 123 Main St, City, State" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Location</button>
+      </form>
+    </div>
+
+    <div class="saved-locations">
+      <h2>Saved Locations</h2>
+      <div id="locations-list">
+        <p class="no-locations">No locations saved yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
