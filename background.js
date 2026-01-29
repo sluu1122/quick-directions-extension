@@ -1,12 +1,5 @@
-// Create the parent context menu on install
+// Initialize context menu on install
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: 'quick-directions-parent',
-    title: 'Get Directions From',
-    contexts: ['selection']
-  });
-
-  // Create a placeholder item if no locations are saved
   updateContextMenu();
 });
 
@@ -22,14 +15,16 @@ chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage();
 });
 
+async function getLocations() {
+  const result = await chrome.storage.sync.get('locations');
+  return result.locations || [];
+}
+
 // Update context menu items based on saved locations
 async function updateContextMenu() {
-  // Remove all menu items first
   await chrome.contextMenus.removeAll();
 
-  // Get saved locations
-  const result = await chrome.storage.sync.get('locations');
-  const locations = result.locations || [];
+  const locations = await getLocations();
 
   if (locations.length === 0) {
     // No locations: show parent with "click to add" child
@@ -70,7 +65,7 @@ async function updateContextMenu() {
 }
 
 // Handle context menu clicks
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info) => {
   if (info.menuItemId === 'no-locations') {
     // Open options page to add locations
     chrome.runtime.openOptionsPage();
@@ -79,8 +74,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
   if (info.menuItemId.startsWith('location-')) {
     const index = parseInt(info.menuItemId.replace('location-', ''), 10);
-    const result = await chrome.storage.sync.get('locations');
-    const locations = result.locations || [];
+    const locations = await getLocations();
     const location = locations[index];
 
     if (location && info.selectionText) {
