@@ -5,7 +5,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Listen for storage changes to update the context menu
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'sync' && changes.locations) {
+  if (namespace === 'sync' && (changes.locations || changes.mapSearchEnabled)) {
     updateContextMenu();
   }
 });
@@ -25,9 +25,11 @@ async function updateContextMenu() {
   await chrome.contextMenus.removeAll();
 
   const locations = await getLocations();
+  const { mapSearchEnabled } = await chrome.storage.sync.get('mapSearchEnabled');
+  const totalItems = locations.length + (mapSearchEnabled ? 1 : 0);
 
-  if (locations.length === 0) {
-    // No locations: show parent with "click to add" child
+  if (totalItems === 0) {
+    // No locations and no map search: show "click to add" prompt
     chrome.contextMenus.create({
       id: 'quick-directions-parent',
       title: 'Get Directions From',
@@ -39,15 +41,22 @@ async function updateContextMenu() {
       title: 'No locations saved (click to add)',
       contexts: ['selection']
     });
-  } else if (locations.length === 1) {
-    // Single location: direct menu item, no flyout
+  } else if (totalItems === 1 && !mapSearchEnabled) {
+    // Single location, no map search: direct menu item
     chrome.contextMenus.create({
       id: 'location-0',
       title: `Directions from ${locations[0].name}`,
       contexts: ['selection']
     });
+  } else if (totalItems === 1 && mapSearchEnabled) {
+    // Map search only, no locations: direct menu item
+    chrome.contextMenus.create({
+      id: 'map-search',
+      title: 'Search on Map',
+      contexts: ['selection']
+    });
   } else {
-    // Multiple locations: show flyout menu
+    // Multiple items: show flyout menu
     chrome.contextMenus.create({
       id: 'quick-directions-parent',
       title: 'Get Directions From',
@@ -61,14 +70,27 @@ async function updateContextMenu() {
         contexts: ['selection']
       });
     });
+    if (mapSearchEnabled) {
+      chrome.contextMenus.create({
+        id: 'map-search',
+        parentId: 'quick-directions-parent',
+        title: 'Search on Map',
+        contexts: ['selection']
+      });
+    }
   }
 }
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info) => {
   if (info.menuItemId === 'no-locations') {
-    // Open options page to add locations
     chrome.runtime.openOptionsPage();
+    return;
+  }
+
+  if (info.menuItemId === 'map-search' && info.selectionText) {
+    const query = encodeURIComponent(info.selectionText.trim());
+    chrome.tabs.create({ url: `https://www.google.com/maps/search/?api=1&query=${query}` });
     return;
   }
 

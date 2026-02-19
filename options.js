@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   loadLocations();
+  loadMapSearchSetting();
   document.getElementById('add-location-form').addEventListener('submit', addLocation);
+  document.getElementById('map-search-enabled').addEventListener('change', saveMapSearchSetting);
 
   // Clear error state on input, add error on invalid
   ['location-name', 'location-address'].forEach(id => {
@@ -9,6 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('invalid', addError);
   });
 });
+
+async function loadMapSearchSetting() {
+  const result = await chrome.storage.sync.get('mapSearchEnabled');
+  document.getElementById('map-search-enabled').checked = result.mapSearchEnabled || false;
+}
+
+async function saveMapSearchSetting() {
+  await chrome.storage.sync.set({ mapSearchEnabled: this.checked });
+}
 
 function addError(e) {
   e.target.classList.add('error');
